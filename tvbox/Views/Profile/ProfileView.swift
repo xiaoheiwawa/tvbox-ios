@@ -4,7 +4,7 @@ import SwiftUI
 /// 个人中心页 - 合并收藏、历史、设置入口为统一 Profile Hub
 struct ProfileView: View {
     var body: some View {
-        NavigationStack {
+        NavigationView {
             List {
                 // Header section
                 Section {
@@ -28,7 +28,7 @@ struct ProfileView: View {
             .navigationTitle("个人中心")
             .navigationBarTitleDisplayMode(.large)
             .background(AppTheme.primaryGradient)
-            .scrollContentBackground(.hidden)
+            .scrollContentBackgroundHiddenIfAvailable()
         }
     }
 

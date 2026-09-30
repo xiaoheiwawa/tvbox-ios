@@ -20,7 +20,7 @@ targets:
   tvbox:
     type: application
     platform: iOS
-    deploymentTarget: "16.4"
+    deploymentTarget: "15.0"
     dependencies:
       - package: VLCKitSPM
         product: VLCKitSPM
@@ -86,7 +86,7 @@ targets:
   tvboxTests:
     type: bundle.unit-test
     platform: iOS
-    deploymentTarget: "16.4"
+    deploymentTarget: "15.0"
     dependencies:
       - target: tvbox
     sources:

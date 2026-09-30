@@ -171,7 +171,7 @@ struct PlayerGestureLayer: View {
     // MARK: - Pinch Gesture
 
     private var pinchGesture: some Gesture {
-        // iOS 16 使用 MagnificationGesture（其 Value 为 CGFloat 缩放系数），
+        // 旧系统使用 MagnificationGesture（其 Value 为 CGFloat 缩放系数），
         // iOS 17 的 MagnifyGesture 需要 `value.magnification`，此处按旧签名取值。
         MagnificationGesture()
             .onChanged { value in

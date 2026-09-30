@@ -115,7 +115,7 @@ struct DetailView: View {
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
                     sourceSwitchMessage = nil
                     showSourceSwitcher = true
@@ -226,7 +226,7 @@ struct DetailView: View {
 
     /// 换源源站选择弹窗：列出配置内所有可用源站，点击后在该站搜索当前片名并切换。
     private var sourceSwitcherSheet: some View {
-        NavigationStack {
+        NavigationView {
             List {
                 Section {
                     ForEach(ApiConfig.shared.sourceBeanList.filter { $0.isSupportedInSwift && $0.key != displayVideo.sourceKey }) { source in
@@ -261,7 +261,7 @@ struct DetailView: View {
                     }
                 }
             }
-            .scrollContentBackground(.hidden)
+            .scrollContentBackgroundHiddenIfAvailable()
             .background(Color(red: 0.08, green: 0.08, blue: 0.1))
             .navigationTitle("切换源站")
             .navigationBarTitleDisplayMode(.inline)
@@ -903,8 +903,21 @@ struct FullScreenPlayerView: View {
     static func requestOrientation(_ target: UIInterfaceOrientationMask) {
         let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
         for scene in scenes where scene.activationState == .foregroundActive {
-            scene.requestGeometryUpdate(.iOS(interfaceOrientations: target))
-            scene.windows.forEach { $0.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations() }
+            if #available(iOS 16.0, *) {
+                scene.requestGeometryUpdate(.iOS(interfaceOrientations: target))
+                scene.windows.forEach { $0.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations() }
+            } else {
+                let legacyOrientation: UIInterfaceOrientation
+                if target.contains(.portrait) {
+                    legacyOrientation = .portrait
+                } else if target.contains(.landscapeLeft) {
+                    legacyOrientation = .landscapeLeft
+                } else {
+                    legacyOrientation = .landscapeRight
+                }
+                UIDevice.current.setValue(NSNumber(value: legacyOrientation.rawValue), forKey: "orientation")
+                UIViewController.attemptRotationToDeviceOrientation()
+            }
         }
     }
     #endif

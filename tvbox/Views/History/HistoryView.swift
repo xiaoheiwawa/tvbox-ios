@@ -26,9 +26,9 @@ struct HistoryView: View {
         historyContent
     }
     
-    /// 历史记录内容视图（不含 NavigationStack 包裹）。
-    /// iOS 下由外层 ProfileView/SettingsView 的 NavigationStack 管理导航；
-    /// macOS 下由 ContentView 的 NavigationSplitView detail 区域使用独立 NavigationStack。
+    /// 历史记录内容视图（不含导航容器包裹）。
+    /// iOS 下由外层 ProfileView/NavigationView 管理导航；
+    /// macOS 下由 ContentView 的 NavigationSplitView detail 区域使用独立导航容器。
     private var historyContent: some View {
         Group {
             if records.isEmpty {

@@ -21,7 +21,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 
 /// 应用入口。
 /// 负责将全局状态 `AppState` 注入到根视图。
-/// 持久化由 `CacheStore` 自行管理（JSON 文件落盘，兼容 iOS 16）。
+/// 持久化由 `CacheStore` 自行管理（JSON 文件落盘，兼容 iOS 15）。
 @main
 struct tvboxApp: App {
     #if os(iOS)

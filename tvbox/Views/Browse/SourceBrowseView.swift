@@ -12,7 +12,7 @@ struct SourceBrowseView: View {
     ]
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     header
@@ -23,9 +23,6 @@ struct SourceBrowseView: View {
                 .padding(.bottom, 30)
             }
             .background(AppTheme.primaryGradient.ignoresSafeArea())
-            .navigationDestination(for: Movie.Video.self) { video in
-                DetailView(video: video)
-            }
         }
         .task { await viewModel.initializeIfNeeded() }
         .refreshable { await viewModel.refresh() }
@@ -155,7 +152,7 @@ struct SourceBrowseView: View {
 
                 LazyVGrid(columns: columns, spacing: 16) {
                     ForEach(viewModel.videos) { video in
-                        NavigationLink(value: video) {
+                        NavigationLink(destination: DetailView(video: video)) {
                             VodCardView(video: video)
                         }
                         #if os(iOS)

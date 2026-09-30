@@ -9,8 +9,8 @@
 ## ✨ 核心特性
 
 - 🎯 **真正的原生跨平台 (Native Cross-platform)**
-  - 基于 SwiftUI，一套代码覆盖 macOS (14.0+) 与 iOS (16.4+)。
-  - 持久化层使用 JSON 文件落盘（原版基于 SwiftData，需要 iOS 17+，本分支已改造以向下兼容 iOS 16）。
+  - 基于 SwiftUI，一套代码覆盖 macOS (14.0+) 与 iOS (15.0+)。
+  - 持久化层使用 JSON 文件落盘（原版基于 SwiftData，需要 iOS 17+，本分支已改造以向下兼容 iOS 15）。
   - 高度针对多端设备的特定交互形式进行原生级适配与优化。
 - 🎨 **前沿的 UI 视觉 (Modern UI & Glassmorphism)**
   - 全新的毛玻璃 (Glassmorphism) 视觉设计体系。
@@ -30,7 +30,7 @@
 
 * **语言**: Swift 5.9
 * **UI 框架**: SwiftUI
-* **数据持久化**: JSON 文件（`CacheStore`，兼容 iOS 16）
+* **数据持久化**: JSON 文件（`CacheStore`，兼容 iOS 15）
 * **工程化管理**: XcodeGen (>= 2.35)
 
 ---
@@ -152,7 +152,7 @@ chmod +x package_mac.sh
 │   ├── ViewModels/     # 业务逻辑与状态管理 (MVVM)
 │   ├── Views/          # 所有的 SwiftUI 原生视图组件
 │   ├── Services/       # 网络层、配置解析层等外部服务交互
-│   ├── Persistence/    # 数据库 (SwiftData) 配置与读写管理
+│   ├── Persistence/    # JSON 持久化配置与读写管理
 │   ├── Utils/          # 通用的帮助类与扩展函数
 │   └── Assets.xcassets # 资源文件集、图标与预设全局色彩 (AccentColor)
 ├── project.yml         # XcodeGen 的工程模板描述文件

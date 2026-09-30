@@ -4,7 +4,7 @@ import Combine
 /// 本地持久化层。
 ///
 /// 说明：本文件已从 SwiftData（iOS 17+）改写为基于 JSON 文件的实现，
-/// 以便在 iOS 16.x 上运行。对外的业务方法与原本保持一致，仅去掉了
+/// 以便在 iOS 15.x 上运行。对外的业务方法与原本保持一致，仅去掉了
 /// `ModelContext` 参数（调用方无需再传入上下文）。
 ///
 /// 数据落盘位置：`Application Support/TVBoxCacheStore/*.json`

@@ -65,7 +65,7 @@ struct LiveView: View {
     }
     
     var body: some View {
-        NavigationStack {
+        NavigationView {
             ZStack {
                 Color.black.ignoresSafeArea()
                 
@@ -104,8 +104,7 @@ struct LiveView: View {
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarHidden(true)
-            .toolbar(.hidden, for: .navigationBar)
-            .toolbar(.hidden, for: .tabBar)
+            .hideTabBarIfAvailable()
             #endif
             .onAppear {
                 // 首次进入时加载频道并展示频道信息卡。
@@ -262,7 +261,7 @@ struct LiveView: View {
                 },
                 onDismiss: { showChannelOverlay = false }
             )
-            .presentationBackground(.clear)
+            .clearPresentationBackgroundIfAvailable()
             .transition(.move(edge: .bottom))
             .animation(.spring(response: 0.3, dampingFraction: 0.85), value: showChannelOverlay)
         }

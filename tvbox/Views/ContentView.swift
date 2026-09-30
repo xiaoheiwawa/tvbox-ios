@@ -66,7 +66,7 @@ struct ContentView: View {
                 Text("TVBox")
                     .font(.system(size: 40, weight: .heavy, design: .rounded))
                     .foregroundColor(.white)
-                    .tracking(2)
+                    .kerning(2)
 
                 if let error = appState.configLoadError {
                     Text(error)
@@ -219,18 +219,18 @@ struct ContentView: View {
             switch selectedTab {
             case 0: HomeView()
             case 1:
-                NavigationStack {
+                NavigationView {
                     SourceBrowseView()
                 }
             case 2: LiveView()
             case 3: SearchView()
             case 4:
-                NavigationStack {
+                NavigationView {
                     FavoritesView()
                 }
             case 5: SettingsView()
             case 6:
-                NavigationStack {
+                NavigationView {
                     HistoryView()
                 }
             default: HomeView()
@@ -293,12 +293,12 @@ struct ContentView: View {
                             Text("TVBox")
                                 .font(.system(size: 48, weight: .heavy, design: .rounded))
                                 .foregroundColor(.white)
-                                .tracking(2)
+                                .kerning(2)
                             
                             Text("极致视听 · 简洁至上")
                                 .font(.subheadline)
                                 .foregroundColor(.white.opacity(0.6))
-                                .tracking(4)
+                                .kerning(4)
                         }
                     }
                     .padding(.top, 60)

@@ -176,6 +176,58 @@ extension View {
     func glassCard(cornerRadius: CGFloat = AppTheme.glassRadius) -> some View {
         self.modifier(GlassBackground(cornerRadius: cornerRadius))
     }
+
+    @ViewBuilder
+    func scrollContentBackgroundHiddenIfAvailable() -> some View {
+        #if os(iOS)
+        if #available(iOS 16.0, *) {
+            scrollContentBackground(.hidden)
+        } else {
+            self
+        }
+        #else
+        scrollContentBackground(.hidden)
+        #endif
+    }
+
+    #if os(iOS)
+    @ViewBuilder
+    func toolbarChromeDarkIfAvailable() -> some View {
+        if #available(iOS 16.0, *) {
+            toolbarColorScheme(.dark, for: .navigationBar)
+                .toolbarBackground(.hidden, for: .navigationBar)
+        } else {
+            self
+        }
+    }
+
+    @ViewBuilder
+    func mediumLargePresentationDetentsIfAvailable() -> some View {
+        if #available(iOS 16.0, *) {
+            presentationDetents([.medium, .large])
+        } else {
+            self
+        }
+    }
+
+    @ViewBuilder
+    func clearPresentationBackgroundIfAvailable() -> some View {
+        if #available(iOS 16.0, *) {
+            presentationBackground(.clear)
+        } else {
+            self
+        }
+    }
+
+    @ViewBuilder
+    func hideTabBarIfAvailable() -> some View {
+        if #available(iOS 16.0, *) {
+            toolbar(.hidden, for: .tabBar)
+        } else {
+            self
+        }
+    }
+    #endif
 }
 
 // MARK: - Image URL

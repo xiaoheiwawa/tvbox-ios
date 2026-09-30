@@ -18,7 +18,7 @@ struct SearchView: View {
     #endif
     
     var body: some View {
-        NavigationStack {
+        NavigationView {
             VStack(spacing: 0) {
                 // 搜索栏
                 searchBar
@@ -124,7 +124,7 @@ struct SearchView: View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: 16) {
                 ForEach(viewModel.results) { video in
-                    NavigationLink(value: video) {
+                    NavigationLink(destination: DetailView(video: video)) {
                         VodCardView(video: video)
                     }
                     #if os(iOS)
@@ -136,9 +136,6 @@ struct SearchView: View {
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
-        }
-        .navigationDestination(for: Movie.Video.self) { video in
-            DetailView(video: video)
         }
     }
     

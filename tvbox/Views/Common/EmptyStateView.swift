@@ -32,7 +32,7 @@ struct EmptyStateView: View {
             Text(title)
                 .font(.title3.bold())
                 .foregroundColor(.white.opacity(0.9))
-                .tracking(1)
+                .kerning(1)
             
             // 副文案用于提供下一步引导，不参与核心逻辑判断。
             if let message = message {

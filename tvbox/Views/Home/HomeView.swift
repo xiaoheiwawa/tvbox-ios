@@ -9,7 +9,7 @@ struct HomeView: View {
     @ObservedObject private var historyStore = CacheStore.shared
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             ScrollView {
                 // 页面标题
                 HStack(spacing: 8) {
@@ -35,9 +35,6 @@ struct HomeView: View {
                 Color.clear.frame(height: 24)
             }
             .background(AppTheme.primaryGradient)
-            .navigationDestination(for: Movie.Video.self) { video in
-                DetailView(video: video)
-            }
             .overlay {
                 if viewModel.isLoading && viewModel.recommendSections.isEmpty && recentRecords.isEmpty {
                     VStack {
@@ -93,7 +90,7 @@ struct HomeView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(alignment: .top, spacing: 12) {
                         ForEach(Array(section.videos.enumerated()), id: \.1.id) { index, video in
-                            NavigationLink(value: video) {
+                            NavigationLink(destination: DetailView(video: video)) {
                                 VodCardView(video: video)
                                     .frame(width: 112)
                                     .overlay(alignment: .topLeading) {
@@ -159,7 +156,7 @@ struct HomeView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
                         ForEach(recentRecords) { record in
-                            NavigationLink(value: movieVideo(from: record)) {
+                            NavigationLink(destination: DetailView(video: movieVideo(from: record))) {
                                 ContinueWatchingCard(record: record)
                             }
                             #if os(iOS)

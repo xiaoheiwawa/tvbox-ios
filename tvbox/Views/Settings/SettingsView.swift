@@ -40,7 +40,7 @@ struct SettingsView: View {
     }
     
     var body: some View {
-        NavigationStack {
+        NavigationView {
             ScrollView {
                 VStack(spacing: 24) {
                     // API 配置
@@ -141,8 +141,7 @@ struct SettingsView: View {
             .navigationTitle("设置")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbarChromeDarkIfAvailable()
             #endif
             .sheet(isPresented: $showApiInput) {
                 apiInputSheet
@@ -229,7 +228,7 @@ struct SettingsView: View {
     // MARK: - API 输入弹窗
     
     private var apiInputSheet: some View {
-        NavigationStack {
+        NavigationView {
             VStack(spacing: 16) {
                 HStack {
                     Image(systemName: "link")
@@ -337,7 +336,7 @@ struct SettingsView: View {
         }
         .overlay(multiRepoSelectionOverlay)
         #if os(iOS)
-        .presentationDetents([.medium, .large])
+        .mediumLargePresentationDetentsIfAvailable()
         #endif
     }
     

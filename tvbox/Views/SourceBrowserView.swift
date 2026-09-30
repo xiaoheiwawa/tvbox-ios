@@ -1,8 +1,7 @@
 import SwiftUI
 
 /// 源站浏览页：手动选择数据源，直接浏览该源的分类与内容。
-/// 注意：本视图不内嵌 NavigationStack —— 作为标签页使用时由 ContentView 包裹导航栈，
-/// 从首页推入时复用首页导航栈；详情跳转依赖外层注册的 navigationDestination。
+/// 注意：本视图不内嵌导航容器；详情跳转使用显式 NavigationLink 目标。
 struct SourceBrowserView: View {
     @StateObject private var viewModel = SourceBrowserViewModel()
     @EnvironmentObject var appState: AppState
@@ -25,11 +24,10 @@ struct SourceBrowserView: View {
         .navigationTitle("源站")
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbarChromeDarkIfAvailable()
         #endif
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItem(placement: .navigationBarTrailing) {
                 setHomeSourceButton
             }
         }
@@ -232,7 +230,7 @@ struct SourceBrowserView: View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: 16) {
                 ForEach(Array(viewModel.displayVideos.enumerated()), id: \.1.id) { index, video in
-                    NavigationLink(value: video) {
+                    NavigationLink(destination: DetailView(video: video)) {
                         VodCardView(video: video)
                     }
                     #if os(iOS)
