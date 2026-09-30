@@ -164,7 +164,11 @@ struct SearchView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 16)
                 
-                FlowLayout(spacing: 8) {
+                LazyVGrid(
+                    columns: [GridItem(.adaptive(minimum: 86, maximum: 150), spacing: 8)],
+                    alignment: .leading,
+                    spacing: 8
+                ) {
                     ForEach(viewModel.searchHistory, id: \.self) { keyword in
                         Button {
                             viewModel.keyword = keyword
@@ -186,50 +190,5 @@ struct SearchView: View {
             
             Spacer()
         }
-    }
-}
-
-/// 流式布局
-struct FlowLayout: Layout {
-    /// 子项间距。
-    var spacing: CGFloat = 8
-    
-    /// 计算整体尺寸。
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let result = arrangement(proposal: proposal, subviews: subviews)
-        return result.size
-    }
-    
-    /// 按计算结果放置子视图。
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let result = arrangement(proposal: ProposedViewSize(width: bounds.width, height: bounds.height), subviews: subviews)
-        for (index, position) in result.positions.enumerated() {
-            subviews[index].place(at: CGPoint(x: bounds.minX + position.x, y: bounds.minY + position.y), proposal: .unspecified)
-        }
-    }
-    
-    /// 核心排版算法：按最大宽度逐个放置，超宽后自动换行。
-    private func arrangement(proposal: ProposedViewSize, subviews: Subviews) -> (size: CGSize, positions: [CGPoint]) {
-        let maxWidth = proposal.width ?? .infinity
-        var positions: [CGPoint] = []
-        var currentX: CGFloat = 0
-        var currentY: CGFloat = 0
-        var lineHeight: CGFloat = 0
-        var maxX: CGFloat = 0
-        
-        for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
-            if currentX + size.width > maxWidth && currentX > 0 {
-                currentX = 0
-                currentY += lineHeight + spacing
-                lineHeight = 0
-            }
-            positions.append(CGPoint(x: currentX, y: currentY))
-            lineHeight = max(lineHeight, size.height)
-            currentX += size.width + spacing
-            maxX = max(maxX, currentX)
-        }
-        
-        return (CGSize(width: maxX, height: currentY + lineHeight), positions)
     }
 }

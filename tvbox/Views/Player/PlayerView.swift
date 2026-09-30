@@ -420,12 +420,14 @@ struct AVPlayerContentView: View {
             .opacity(0.01)
             .allowsHitTesting(false)
         }
+        #if os(macOS)
         .onContinuousHover { phase in
             switch phase {
             case .active(_): wakeUpControls()
             case .ended: break
             }
         }
+        #endif
         .onAppear {
             syncRateFromSettings()
             setupPlayer()
@@ -494,7 +496,7 @@ struct AVPlayerContentView: View {
         let playerItem = AVPlayerItem(asset: asset)
         playerItem.preferredForwardBufferDuration = 0
         let newPlayer = AVPlayer(playerItem: playerItem)
-        newPlayer.defaultRate = preferredRate
+        Self.setDefaultRate(preferredRate, on: newPlayer)
         if let sharedController {
             sharedController.setPlayer(newPlayer, urlString: targetURLString)
         }
@@ -1059,6 +1061,12 @@ struct AVPlayerContentView: View {
         return supportedPlaybackRates.min(by: { abs($0 - raw) < abs($1 - raw) }) ?? 1.0
     }
 
+    private static func setDefaultRate(_ normalized: Float, on player: AVPlayer) {
+        if #available(iOS 16.0, macOS 13.0, *) {
+            player.defaultRate = normalized
+        }
+    }
+
     private func syncRateFromSettings() {
         rate = normalizedSavedPlaybackRate
     }
@@ -1068,7 +1076,7 @@ struct AVPlayerContentView: View {
         rate = normalized
         savedPlaybackRate = Double(normalized)
         guard let player else { return }
-        player.defaultRate = normalized
+        Self.setDefaultRate(normalized, on: player)
         if player.rate > 0 {
             player.rate = normalized
         }
@@ -1077,7 +1085,7 @@ struct AVPlayerContentView: View {
     private func applyPreferredPlaybackRate(to player: AVPlayer) {
         let normalized = normalizedSavedPlaybackRate
         rate = normalized
-        player.defaultRate = normalized
+        Self.setDefaultRate(normalized, on: player)
         if player.rate > 0 {
             player.rate = normalized
         }
@@ -1086,7 +1094,7 @@ struct AVPlayerContentView: View {
     private func playAtPreferredRate(_ player: AVPlayer) {
         let normalized = normalizedSavedPlaybackRate
         rate = normalized
-        player.defaultRate = normalized
+        Self.setDefaultRate(normalized, on: player)
         player.playImmediately(atRate: normalized)
     }
 

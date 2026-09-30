@@ -212,7 +212,7 @@ extension View {
 
     @ViewBuilder
     func clearPresentationBackgroundIfAvailable() -> some View {
-        if #available(iOS 16.0, *) {
+        if #available(iOS 16.4, *) {
             presentationBackground(.clear)
         } else {
             self

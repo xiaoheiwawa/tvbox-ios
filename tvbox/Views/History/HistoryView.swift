@@ -62,8 +62,8 @@ struct HistoryView: View {
         .navigationBarTitleDisplayMode(.inline)
         #endif
         .toolbar {
-            if !records.isEmpty {
-                ToolbarItem(placement: .automatic) {
+            ToolbarItem(placement: .automatic) {
+                if !records.isEmpty {
                     // 清空历史使用统一缓存服务，确保行为与其他入口一致。
                     Button {
                         store.clearHistory()
