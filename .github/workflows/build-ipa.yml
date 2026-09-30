@@ -40,11 +40,12 @@ jobs:
           grep -n "SWIFT_VERSION" project.yml || true
           echo ""
           echo "=== 工程实际生效的设置 ==="
-          BUILD_SETTINGS=$(xcodebuild -project tvbox.xcodeproj -scheme tvbox -showBuildSettings -sdk iphoneos \
+          BUILD_SETTINGS=$(xcodebuild -project tvbox.xcodeproj -scheme tvbox -destination "generic/platform=iOS" -sdk iphoneos -showBuildSettings \
             | grep -E "IPHONEOS_DEPLOYMENT_TARGET|PRODUCT_BUNDLE_IDENTIFIER|PRODUCT_NAME|SWIFT_VERSION|SWIFT_STRICT_CONCURRENCY" || true)
           echo "$BUILD_SETTINGS"
           DEPLOYMENT_TARGET=$(printf '%s\n' "$BUILD_SETTINGS" \
-            | awk -F ' = ' '/IPHONEOS_DEPLOYMENT_TARGET/ { print $2; exit }')
+            | sed -n 's/^[[:space:]]*IPHONEOS_DEPLOYMENT_TARGET = //p' \
+            | head -n 1)
           if [ "$DEPLOYMENT_TARGET" != "15.0" ]; then
             echo "::error::iOS deployment target 必须是 15.0，当前为 ${DEPLOYMENT_TARGET:-未读取到}"
             exit 1
