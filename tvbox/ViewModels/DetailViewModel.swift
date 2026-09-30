@@ -37,6 +37,8 @@ class DetailViewModel: ObservableObject {
     @Published var isPlaying = false
     /// 当前实际播放地址（可能是原始地址，也可能是清晰度切换后的子流地址）。
     @Published var playUrl: String?
+    /// 当前播放地址需要携带的 HTTP 请求头（由远程 `play` 接口下发）。
+    @Published var playHeaders: [String: String] = [:]
     /// 续播起始位置（秒）。
     @Published var resumeSeconds: Double = 0
     /// 当前可选清晰度列表。
@@ -57,11 +59,18 @@ class DetailViewModel: ObservableObject {
     private var qualityResolveTask: Task<Void, Never>?
     /// 解析令牌，防止异步结果回写到过期状态。
     private var qualityResolveToken = UUID()
+    /// 当前详情对应的源，用于播放地址解析。
+    private var currentSource: SourceBean?
+    /// 播放地址解析任务，用于取消旧请求。
+    private var playResolveTask: Task<Void, Never>?
+    /// 播放地址解析令牌，防止异步结果回写错位。
+    private var playResolveToken = UUID()
     
     /// 加载视频详情
     func loadDetail(video: Movie.Video) async {
         guard let source = ApiConfig.shared.getSource(key: video.sourceKey)
                 ?? ApiConfig.shared.homeSourceBean else { return }
+        currentSource = source
         
         isLoading = true
         errorMessage = nil
@@ -84,6 +93,45 @@ class DetailViewModel: ObservableObject {
         }
         
         isLoading = false
+    }
+
+    /// 设置播放地址：先立即使用原始地址，再异步向源站请求最终直链（含请求头）。
+    ///
+    /// 远程源（如 hometv/drpy-node）的剧集地址通常是网页或标识，需经 `?play=` 二次解析。
+    private func applyPlaybackURL(episodeURL: String, flag: String) {
+        let fallback = selectedPlayableURL(fallback: episodeURL)
+        playUrl = fallback
+        playHeaders = [:]
+
+        playResolveTask?.cancel()
+        playResolveTask = nil
+
+        // 仅远程源（type=4）需要二次取流；标准 CMS 剧集地址已是最终地址。
+        guard let source = currentSource, source.type == 4 else { return }
+
+        let token = UUID()
+        playResolveToken = token
+        playResolveTask = Task { [episodeURL, flag, source, fallback] in
+            let resolution = await sourceService.resolvePlay(
+                sourceBean: source,
+                flag: flag,
+                episodeURL: episodeURL
+            )
+            guard !Task.isCancelled, playResolveToken == token else { return }
+
+            if !resolution.headers.isEmpty {
+                playHeaders = resolution.headers
+            }
+
+            let resolved = resolution.url.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !resolved.isEmpty else { return }
+
+            // 仅在未手动选择清晰度（自动）时用解析结果替换地址，
+            // 避免覆盖用户已选定的清晰度变体。
+            if selectedQualityId == PlaybackQualityOption.autoIdentifier, resolved != fallback {
+                playUrl = resolved
+            }
+        }
     }
     
     /// 选择线路
@@ -112,7 +160,7 @@ class DetailViewModel: ObservableObject {
         
         // 播放中切线路时，立即切换到新线路对应剧集
         if isPlaying {
-            playUrl = selectedPlayableURL(fallback: episodeURL)
+            applyPlaybackURL(episodeURL: episodeURL, flag: flag)
         }
     }
     
@@ -128,7 +176,7 @@ class DetailViewModel: ObservableObject {
             // 仅当剧集 URL 变化时重置清晰度选择。
             let shouldResetQuality = qualityBaseEpisodeURL != episode.url
             updateQualityOptions(for: episode.url, resetSelection: shouldResetQuality)
-            playUrl = selectedPlayableURL(fallback: episode.url)
+            applyPlaybackURL(episodeURL: episode.url, flag: selectedFlag)
             isPlaying = true
         }
     }
@@ -155,7 +203,7 @@ class DetailViewModel: ObservableObject {
         realtimeProgressSeconds = progress
         let episodeURL = episodes[targetIndex].url
         updateQualityOptions(for: episodeURL, resetSelection: true)
-        playUrl = selectedPlayableURL(fallback: episodeURL)
+        applyPlaybackURL(episodeURL: episodeURL, flag: targetFlag)
         isPlaying = true
     }
     

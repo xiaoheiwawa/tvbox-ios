@@ -100,3 +100,27 @@ struct Movie: Codable {
         }
     }
 }
+
+/// 播放地址解析结果。
+///
+/// 对应 Android/壳子端 `play` 接口的返回结构（hometv / drpy-node）：
+/// `{"parse":0,"url":"https://.../index.m3u8","header":{...},"jx":0}`。
+/// - `parse == 0`：`url` 即最终可直接播放的流地址。
+/// - `parse == 1`：`url` 为需要嗅探/解析的页面地址，Swift 端暂不内置解析规则，
+///   此时回退为原地址交由播放器直接尝试。
+struct PlayResolution: Equatable {
+    /// 最终播放地址。
+    let url: String
+    /// 0 表示直链，1 表示需要解析。
+    let parse: Int
+    /// 播放时需要携带的 HTTP 请求头（如 Referer / User-Agent）。
+    let headers: [String: String]
+
+    /// 是否已解析为可直接播放的直链。
+    var isDirect: Bool { parse == 0 }
+
+    /// 用于回退的原始结果。
+    static func passthrough(url: String) -> PlayResolution {
+        PlayResolution(url: url, parse: 1, headers: [:])
+    }
+}

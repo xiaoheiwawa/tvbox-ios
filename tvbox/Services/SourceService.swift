@@ -323,6 +323,137 @@ class SourceService {
         let jsonStr = try await network.getString(from: url)
         return try parseDetail(jsonStr, sourceKey: sourceBean.key, type: sourceBean.type)
     }
+
+    // MARK: - 播放地址解析
+
+    /// 解析剧集地址为最终可播放的直链。
+    ///
+    /// hometv / drpy-node 这类远程源，详情接口返回的 `vod_play_url` 往往是**网页地址**
+    /// 或需要二次取流的标识（如 CCTV 的 guid），必须再调一次 `?play=<url>&flag=<flag>`
+    /// 才能拿到真正的 m3u8。Swift 端此前完全没走这一步，导致大量 T4 源点开即播放失败。
+    ///
+    /// - Parameters:
+    ///   - sourceBean: 剧集所属源。
+    ///   - flag: 剧集所属线路名（`vod_play_from` 中的一段）。
+    ///   - episodeURL: 详情里解析出的原始剧集地址。
+    /// - Returns: 解析结果；接口不可用时回退为原地址。
+    func resolvePlay(sourceBean: SourceBean, flag: String, episodeURL: String) async -> PlayResolution {
+        let trimmed = episodeURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return PlayResolution.passthrough(url: episodeURL) }
+        // `?play=` 是 drpy 类服务端脚本（type=4）的契约；
+        // 标准 CMS（type=0/1）的剧集地址已是最终地址，无需也不应再请求。
+        guard sourceBean.type == 4, sourceBean.isHttpApi else {
+            return PlayResolution.passthrough(url: trimmed)
+        }
+
+        // 已经是明确的流地址（m3u8/mp4/flv 等）时无需再走远程解析接口。
+        if Self.looksLikeDirectMediaURL(trimmed) {
+            return PlayResolution(url: trimmed, parse: 0, headers: [:])
+        }
+
+        var queryItems: [URLQueryItem] = [
+            URLQueryItem(name: "play", value: trimmed),
+            URLQueryItem(name: "flag", value: flag)
+        ]
+
+        // 加载 extend（部分 remote 源依赖它才能正确解析）。
+        if let ext = sourceBean.ext, !ext.isEmpty {
+            let extend = await resolveExtend(ext)
+            if !extend.isEmpty {
+                queryItems.append(URLQueryItem(name: "extend", value: extend))
+            }
+        }
+
+        guard let url = try? buildURL(base: sourceBean.api, queryItems: queryItems),
+              let jsonStr = try? await network.getString(from: url) else {
+            return PlayResolution.passthrough(url: trimmed)
+        }
+
+        return Self.parsePlayResolution(jsonStr) ?? PlayResolution.passthrough(url: trimmed)
+    }
+
+    /// 解析 `play` 接口返回的 JSON。
+    ///
+    /// 兼容多种字段命名与嵌套：
+    /// - `url` / `play_url`
+    /// - `parse` / `parses` / `jx`（0 直链，1 需解析）
+    /// - `header` / `headers`（字符串或对象）
+    static func parsePlayResolution(_ jsonStr: String) -> PlayResolution? {
+        guard let data = jsonStr.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+
+        // 某些实现会把结果包一层 list。
+        let payload: [String: Any]
+        if let list = json["list"] as? [[String: Any]], let first = list.first {
+            payload = first
+        } else {
+            payload = json
+        }
+
+        let url = (payload["url"] as? String)
+            ?? (payload["play_url"] as? String)
+            ?? ""
+        guard !url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return nil
+        }
+
+        let parse = Self.intValue(payload["parse"])
+            ?? Self.intValue(payload["parses"])
+            ?? Self.intValue(payload["jx"])
+            ?? 0
+
+        let headers = Self.stringDictionary(payload["header"])
+            .merging(Self.stringDictionary(payload["headers"])) { current, _ in current }
+
+        return PlayResolution(url: url, parse: parse, headers: headers)
+    }
+
+    /// 兼容 Int / String / 浮点型的整数取值。
+    private static func intValue(_ value: Any?) -> Int? {
+        switch value {
+        case let int as Int: return int
+        case let bool as Bool: return bool ? 1 : 0
+        case let double as Double: return Int(double)
+        case let string as String: return Int(string)
+        case let number as NSNumber: return number.intValue
+        default: return nil
+        }
+    }
+
+    /// 将 header 字段（对象或 JSON 字符串）转成字符串字典。
+    private static func stringDictionary(_ value: Any?) -> [String: String] {
+        if let dict = value as? [String: Any] {
+            var result: [String: String] = [:]
+            for (key, raw) in dict {
+                if let str = raw as? String {
+                    result[key] = str
+                } else if let number = raw as? NSNumber {
+                    result[key] = number.stringValue
+                }
+            }
+            return result
+        }
+        if let str = value as? String,
+           let data = str.data(using: .utf8),
+           let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            return stringDictionary(dict)
+        }
+        return [:]
+    }
+
+    /// 判断地址是否已是可直接播放的媒体流（无需再走解析接口）。
+    private static func looksLikeDirectMediaURL(_ url: String) -> Bool {
+        let lowercased = url.lowercased()
+        guard lowercased.hasPrefix("http://") || lowercased.hasPrefix("https://")
+                || lowercased.hasPrefix("rtmp://") || lowercased.hasPrefix("rtsp://") else {
+            return false
+        }
+        let mediaExtensions = [".m3u8", ".mp4", ".flv", ".mkv", ".avi", ".ts", ".mov", ".m4v", ".mpd"]
+        let path = lowercased.split(separator: "?").first.map(String.init) ?? lowercased
+        return mediaExtensions.contains { path.hasSuffix($0) }
+    }
     
     private func parseDetail(_ jsonStr: String, sourceKey: String, type: Int) throws -> VodInfo? {
         if type == 0 {

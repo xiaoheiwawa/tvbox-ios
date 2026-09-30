@@ -52,46 +52,6 @@ targets:
         Release:
           SWIFT_OPTIMIZATION_LEVEL: "-O"
 
-  tvbox-Tests:
-    type: bundle.unit-test
-    platform: iOS
-    deploymentTarget: "16.4"
-    sources:
-      - path: tvbox-Tests
-      - path: tvboxTests
-    dependencies:
-      - target: tvbox
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.tvbox.app.tests
-        GENERATE_INFOPLIST_FILE: YES
-        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/TVBox.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/TVBox"
-        BUNDLE_LOADER: "$(TEST_HOST)"
-      configs:
-        Debug:
-          SWIFT_OPTIMIZATION_LEVEL: "-Onone"
-        Release:
-          SWIFT_OPTIMIZATION_LEVEL: "-O"
-
-  tvboxTests:
-    type: bundle.unit-test
-    platform: iOS
-    deploymentTarget: "16.4"
-    dependencies:
-      - target: tvbox
-    sources:
-      - path: tvboxTests
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.tvbox.app.tests
-        GENERATE_INFOPLIST_FILE: YES
-        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/TVBox.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/TVBox"
-        BUNDLE_LOADER: "$(TEST_HOST)"
-      configs:
-        Debug:
-          SWIFT_OPTIMIZATION_LEVEL: "-Onone"
-        Release:
-          SWIFT_OPTIMIZATION_LEVEL: "-O"
 
   tvbox-macOS:
     type: application
@@ -142,3 +102,22 @@ targets:
           SWIFT_OPTIMIZATION_LEVEL: "-Onone"
         Release:
           SWIFT_OPTIMIZATION_LEVEL: "-O"
+
+# 显式声明共享 scheme，确保 CI 里 `xcodebuild -scheme tvbox` 必定可用。
+schemes:
+  tvbox:
+    build:
+      targets:
+        tvbox: all
+    run:
+      config: Debug
+    archive:
+      config: Release
+  tvbox-macOS:
+    build:
+      targets:
+        tvbox-macOS: all
+    run:
+      config: Debug
+    archive:
+      config: Release

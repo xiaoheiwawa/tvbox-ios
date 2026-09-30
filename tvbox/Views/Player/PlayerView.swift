@@ -108,6 +108,8 @@ final class SystemPlayerSessionController: ObservableObject {
 /// 视频播放器组件 - 对应 Android 版 PlayFragment
 struct PlayerView: View {
     let urlString: String
+    /// 播放时需要携带的 HTTP 请求头（由远程 `play` 接口下发）。
+    var httpHeaders: [String: String] = [:]
     var startPosition: Double = 0
     var onProgressChanged: ((Double, Double?) -> Void)? = nil
     var onPlaybackEnded: (() -> Void)? = nil
@@ -144,6 +146,7 @@ struct PlayerView: View {
             case .system:
                 AVPlayerContentView(
                     urlString: urlString,
+                    httpHeaders: httpHeaders,
                     startPosition: startPosition,
                     onProgressChanged: onProgressChanged,
                     onPlaybackEnded: onPlaybackEnded,
@@ -158,6 +161,7 @@ struct PlayerView: View {
             case .vlc:
                 VLCVodPlayerView(
                     urlString: urlString,
+                    httpHeaders: httpHeaders,
                     startPosition: startPosition,
                     onProgressChanged: onProgressChanged,
                     onPlaybackEnded: onPlaybackEnded,
@@ -195,6 +199,8 @@ struct PlayerView: View {
 struct AVPlayerContentView: View {
     private static let supportedPlaybackRates: [Float] = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0]
     let urlString: String
+    /// 播放时需要携带的 HTTP 请求头。
+    var httpHeaders: [String: String] = [:]
     var startPosition: Double = 0
     var onProgressChanged: ((Double, Double?) -> Void)? = nil
     var onPlaybackEnded: (() -> Void)? = nil
@@ -478,7 +484,12 @@ struct AVPlayerContentView: View {
         cleanupPlayer()
         
         // 使用 AVURLAsset 并设置自定义 HTTP 头，解决部分 CDN 拒绝无 User-Agent 请求的问题
-        let asset = AVURLAsset(url: url)
+        let asset: AVURLAsset
+        if httpHeaders.isEmpty {
+            asset = AVURLAsset(url: url)
+        } else {
+            asset = AVURLAsset(url: url, options: ["AVURLAssetHTTPHeaderFieldsKey": httpHeaders])
+        }
         asset.resourceLoader.setDelegate(nil, queue: nil)
         let playerItem = AVPlayerItem(asset: asset)
         playerItem.preferredForwardBufferDuration = 0

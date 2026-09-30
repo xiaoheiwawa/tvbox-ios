@@ -50,6 +50,7 @@ struct DetailView: View {
                 if !showFullScreen, !isFullScreenDismissing, viewModel.isPlaying, let url = viewModel.playUrl {
                     PlayerView(
                         urlString: url,
+                        httpHeaders: viewModel.playHeaders,
                         startPosition: viewModel.currentPlaybackSeconds(),
                         onProgressChanged: handlePlaybackProgress,
                         onPlaybackEnded: playNextEpisodeIfNeeded,
@@ -160,6 +161,7 @@ struct DetailView: View {
             if showFullScreen, let url = viewModel.playUrl {
                 FullScreenPlayerView(
                     urlString: url,
+                    httpHeaders: viewModel.playHeaders,
                     startPosition: viewModel.currentPlaybackSeconds(),
                     onProgressChanged: handlePlaybackProgress,
                     onPlaybackEnded: playNextEpisodeIfNeeded,
@@ -195,6 +197,7 @@ struct DetailView: View {
             if let url = viewModel.playUrl {
                 FullScreenPlayerView(
                     urlString: url,
+                    httpHeaders: viewModel.playHeaders,
                     startPosition: viewModel.currentPlaybackSeconds(),
                     onProgressChanged: handlePlaybackProgress,
                     onPlaybackEnded: playNextEpisodeIfNeeded,
@@ -779,6 +782,8 @@ struct DetailView: View {
 /// - 竖屏全屏：请求系统转回竖屏，画面竖向铺满整屏，适合竖屏视频。
 struct FullScreenPlayerView: View {
     let urlString: String
+    /// 播放时需要携带的 HTTP 请求头。
+    var httpHeaders: [String: String] = [:]
     var startPosition: Double = 0
     var onProgressChanged: ((Double, Double?) -> Void)? = nil
     var onPlaybackEnded: (() -> Void)? = nil
@@ -829,6 +834,7 @@ struct FullScreenPlayerView: View {
     private var playerContent: some View {
         PlayerView(
             urlString: urlString,
+            httpHeaders: httpHeaders,
             startPosition: startPosition,
             onProgressChanged: onProgressChanged,
             onPlaybackEnded: onPlaybackEnded,

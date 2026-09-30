@@ -133,6 +133,7 @@ final class VLCPlayerController: NSObject, ObservableObject, VLCMediaPlayerDeleg
     
     func play(
         url: URL,
+        httpHeaders: [String: String] = [:],
         startPosition: Double,
         isLive: Bool,
         onProgressChanged: ((Double, Double?) -> Void)?,
@@ -190,6 +191,16 @@ final class VLCPlayerController: NSObject, ObservableObject, VLCMediaPlayerDeleg
             "http-reconnect": 1,
             "http-user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         ]
+        for (key, value) in httpHeaders {
+            switch key.lowercased() {
+            case "user-agent":
+                mediaOptions["http-user-agent"] = value
+            case "referer", "referrer":
+                mediaOptions["http-referrer"] = value
+            default:
+                mediaOptions[key] = value
+            }
+        }
         if !isLive {
             mediaOptions["avcodec-hurry-up"] = 0
             mediaOptions["clock-synchro"] = 0
@@ -839,6 +850,8 @@ final class VLCPlayerController: NSObject, ObservableObject, VLCMediaPlayerDeleg
 
 struct VLCVodPlayerView: View {
     let urlString: String
+    /// 播放时需要携带的 HTTP 请求头。
+    var httpHeaders: [String: String] = [:]
     var startPosition: Double = 0
     var onProgressChanged: ((Double, Double?) -> Void)? = nil
     var onPlaybackEnded: (() -> Void)? = nil
@@ -1057,6 +1070,7 @@ struct VLCVodPlayerView: View {
             guard !Task.isCancelled else { return }
             controller.play(
                 url: url,
+                httpHeaders: httpHeaders,
                 startPosition: targetStartPosition,
                 isLive: false,
                 onProgressChanged: onProgressChanged,
@@ -2015,6 +2029,7 @@ final class VLCPlayerController: ObservableObject {
 
 struct VLCVodPlayerView: View {
     let urlString: String
+    var httpHeaders: [String: String] = [:]
     var startPosition: Double = 0
     var onProgressChanged: ((Double, Double?) -> Void)? = nil
     var onPlaybackEnded: (() -> Void)? = nil
@@ -2028,6 +2043,7 @@ struct VLCVodPlayerView: View {
     var body: some View {
         AVPlayerContentView(
             urlString: urlString,
+            httpHeaders: httpHeaders,
             startPosition: startPosition,
             onProgressChanged: onProgressChanged,
             onPlaybackEnded: onPlaybackEnded,
